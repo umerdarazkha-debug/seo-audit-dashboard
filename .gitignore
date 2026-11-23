@@ -1,0 +1,19 @@
+# your crawls and reports stay local
+report/
+reports/
+crawl*/
+!examples/sample-crawl/
+!examples/sample-crawl-previous/
+*.seospider
+*.dbseospider
+*.log
+
+# secrets
+.env
+.env.*
+
+# python / os
+__pycache__/
+*.pyc
+.venv/
+.DS_Store

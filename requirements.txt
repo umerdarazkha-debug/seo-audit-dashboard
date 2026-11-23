@@ -1,0 +1,2 @@
+# Only needed for the .xlsx workbook. The HTML report uses the standard library.
+openpyxl>=3.1
