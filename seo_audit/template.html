@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>%%TITLE%%</title>
+<style>
+:root { --bg:#f6f7f9; --panel:#ffffff; --fg:#17202b; --mute:#5b6675; --line:#e2e6eb; --accent:#0f766e; --chip:#eef1f4; --bad:#b42318; --warn:#9a5b00; --good:#1f7a4c; --code:#f3f5f7; --skip:#8a94a3;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; color-scheme:light }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0f1318; --panel:#161b22; --fg:#e6ebf1; --mute:#9aa5b4; --line:#272f39; --accent:#2cc9b4; --chip:#1f2630; --bad:#f97066; --warn:#f2b54a; --good:#4ade80; --code:#11161c; --skip:#6b7685; color-scheme:dark } }
+:root[data-theme="dark"] { --bg:#0f1318; --panel:#161b22; --fg:#e6ebf1; --mute:#9aa5b4; --line:#272f39; --accent:#2cc9b4; --chip:#1f2630; --bad:#f97066; --warn:#f2b54a; --good:#4ade80; --code:#11161c; --skip:#6b7685; color-scheme:dark }
+* { box-sizing:border-box }
+body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.55 var(--font); }
+.wrap { max-width:1160px; margin:0 auto; padding:24px 16px 72px; }
+h1 { font-size:clamp(24px,3.6vw,34px); line-height:1.15; margin:0 0 4px; letter-spacing:-.01em }
+h2 { font-size:20px; margin:0 0 10px } h3 { font-size:16px; margin:0 0 6px }
+.meta { color:var(--mute); font-size:13px } .mute { color:var(--mute) }
+a { color:var(--accent); text-decoration:none; overflow-wrap:anywhere } a:hover { text-decoration:underline }
+code { font:12.5px var(--mono); background:var(--chip); padding:1px 5px; border-radius:4px; overflow-wrap:anywhere }
+.panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px; min-width:0 }
+section { margin:0 0 28px }
+header.top { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap; margin-bottom:16px }
+.sample { display:inline-block; margin:0 0 10px; font-size:12px; font-weight:600; padding:3px 9px; border-radius:6px; background:color-mix(in srgb, var(--warn) 18%, transparent); color:var(--warn) }
+nav.tabs { display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin:0 0 22px; position:sticky; top:0; background:var(--bg); z-index:5; padding-top:6px }
+nav.tabs button { font:600 14px var(--font); padding:9px 14px; border:0; border-bottom:2px solid transparent; background:none; color:var(--mute); cursor:pointer }
+nav.tabs button[aria-selected="true"] { color:var(--fg); border-bottom-color:var(--accent) }
+nav.tabs button span { font:500 12px var(--mono); margin-left:5px; color:var(--mute) }
+.btn { font:13px var(--font); padding:7px 12px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--fg); cursor:pointer; white-space:nowrap }
+button:focus-visible, input:focus-visible, a:focus-visible, select:focus-visible { outline:2px solid var(--accent); outline-offset:2px }
+
+/* overview */
+.overview { display:grid; grid-template-columns:minmax(210px,250px) 1fr; gap:14px }
+@media (max-width:760px) { .overview { grid-template-columns:1fr } }
+.scorebox { display:grid; justify-items:center; align-content:center; gap:4px; text-align:center }
+.ring { width:148px; height:148px } .ring text { fill:var(--fg) }
+.verdict { font-weight:700 } .verdict.good { color:var(--good) } .verdict.warn { color:var(--warn) } .verdict.bad { color:var(--bad) }
+.tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; align-content:start }
+@media (max-width:520px) { .tiles { grid-template-columns:repeat(2,minmax(0,1fr)) } }
+.tile { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px }
+.tn { font-size:26px; font-weight:700; line-height:1.1; font-feature-settings:"tnum" } .tile.bad .tn { color:var(--bad) } .tile.warn .tn { color:var(--warn) } .tile.good .tn { color:var(--good) }
+.tl { font-weight:600; margin-top:4px; font-size:13.5px } .ts { color:var(--mute); font-size:12.5px }
+ul.find { margin:0; padding-left:20px; display:grid; gap:6px; max-width:90ch }
+.two { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:14px }
+.bar { display:grid; grid-template-columns:minmax(120px,40%) 1fr 44px; gap:10px; align-items:center; font-size:13.5px; padding:4px 0 }
+.track { height:10px; background:var(--chip); border-radius:5px; overflow:hidden } .track i { display:block; height:100% }
+.track i.good { background:var(--good) } .track i.warn { background:var(--warn) } .track i.bad { background:var(--bad) }
+.bv { font:500 12.5px var(--mono); text-align:right }
+
+/* tables */
+.box { overflow:auto; border:1px solid var(--line); border-radius:10px; background:var(--panel); max-height:680px }
+table { border-collapse:collapse; width:100%; font-size:13.5px }
+th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top }
+th { position:sticky; top:0; background:var(--panel); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--mute); z-index:1; white-space:nowrap }
+td.n, th.n { text-align:right; font-family:var(--mono); font-feature-settings:"tnum"; white-space:nowrap }
+td.u { font:12.5px var(--mono); min-width:220px; max-width:440px; overflow-wrap:anywhere }
+td.fx { min-width:220px }
+tr.rr { cursor:pointer } tr.rr:hover td { background:color-mix(in srgb, var(--accent) 6%, transparent) }
+tr.rr td:first-child::before { content:"▸ "; color:var(--mute) } tr.rr.open td:first-child::before { content:"▾ " }
+tr.sub > td { background:color-mix(in srgb, var(--chip) 55%, transparent); padding:4px 12px 12px 26px }
+table.inner { font-size:12.5px } table.inner th { position:static; background:none; padding:8px 8px 4px; border:0 } table.inner td { padding:5px 8px }
+table.inner td:first-child { font-family:var(--mono); overflow-wrap:anywhere }
+.more { margin:8px 0 0 }
+
+/* status */
+.pill { display:inline-block; font:600 11.5px var(--font); padding:2px 8px; border-radius:10px; white-space:nowrap; background:var(--chip); color:var(--mute) }
+.pill.pass { color:var(--good); background:color-mix(in srgb, var(--good) 14%, transparent) }
+.pill.fail { color:var(--bad); background:color-mix(in srgb, var(--bad) 14%, transparent) }
+.pill.warn { color:var(--warn); background:color-mix(in srgb, var(--warn) 16%, transparent) }
+.tag { display:inline-block; font:500 12px var(--font); padding:2px 8px; border-radius:5px; background:var(--chip); color:var(--mute); white-space:nowrap }
+.tag.P1 { color:var(--bad); background:color-mix(in srgb, var(--bad) 14%, transparent); font-weight:700 }
+.tag.P2 { color:var(--warn); background:color-mix(in srgb, var(--warn) 16%, transparent); font-weight:700 }
+.tag.P3 { font-weight:700 }
+
+/* filters */
+.filters { display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; margin:0 0 14px }
+.seg { display:inline-flex; flex-wrap:wrap; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--panel) }
+.seg button { font:13px var(--font); padding:6px 11px; border:0; border-right:1px solid var(--line); background:none; color:var(--fg); cursor:pointer }
+.seg button:last-child { border-right:0 } .seg button[aria-pressed="true"] { background:var(--accent); color:var(--panel); font-weight:600 }
+.fl { font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--mute); margin-right:6px }
+input[type=search] { font:14px var(--font); padding:8px 11px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--fg); flex:1 1 240px; min-width:0 }
+
+/* issue cards */
+.issue { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--line); border-radius:10px; padding:16px; margin:0 0 16px; scroll-margin-top:60px }
+.issue.bad { border-left-color:var(--bad) } .issue.warn { border-left-color:var(--warn) } .issue.pass { border-left-color:var(--good) } .issue.skip { border-left-color:var(--skip) }
+.issue h3 { font-size:17px } .tags { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px }
+.issue p { margin:0 0 8px; max-width:92ch }
+.fixbox { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin:0 0 10px; max-width:100ch }
+pre { margin:0 0 10px; background:var(--code); border:1px solid var(--line); border-radius:8px; padding:12px; overflow:auto; font:12.5px/1.5 var(--mono); position:relative }
+.copy { position:absolute; top:6px; right:6px; font-size:12px; padding:3px 8px }
+details.rows > summary { cursor:pointer; font-weight:600; margin:6px 0 }
+.fixorder td:nth-child(2) { min-width:260px }
+.check-sec { margin:0 0 18px }
+.check-sec h3 { margin:0 0 8px }
+.counts { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 14px }
+footer { margin-top:40px; color:var(--mute); font-size:12.5px }
+@media (max-width:600px) { td.u { min-width:160px } th, td { padding:7px 8px } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script id="data" type="application/json">%%DATA%%</script>
+<script>
+(function () {
+'use strict';
+const D = JSON.parse(document.getElementById('data').textContent);
+const $ = (s, el) => (el || document).querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => n == null ? '–' : Number(n).toLocaleString('en-US');
+const link = u => /^https?:\/\//.test(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>` : esc(u);
+const tone = s => s == null ? '' : s >= 85 ? 'good' : s >= 65 ? 'warn' : 'bad';
+const ST = {open:'Open', pass:'Passed', skip:'Not checked'};
+const CST = {pass:'Pass', fail:'Fail', warn:'Partly', todo:'Not checked here', na:'Does not apply'};
+
+/* theme toggle: auto -> light -> dark */
+function setTheme(t) { const r = document.documentElement; if (t === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', t);
+  try { localStorage.setItem('seo-audit-theme', t) } catch (e) {} const b = $('#theme'); if (b) b.textContent = 'Theme: ' + t; }
+
+const open = D.groups.filter(g => g.status === 'open');
+const tabs = [['audit','Audit',open.length],['checklist','Checklist',D.checklist.total],['internal','Internal links',D.internal_total],['broken','404 and broken links',D.broken.length],['external','External links',D.external.length]];
+
+$('#app').innerHTML = `
+${/example\.(com|org|net)$|\.example$/.test(D.host) ? '<div class="sample">Sample report built from a made-up crawl. None of this data is real.</div>' : ''}
+<header class="top"><div><h1>SEO audit: ${esc(D.host)}</h1>
+<div class="meta">${esc(D.date)} · crawl folder ${esc(D.crawl)} · ${fmt(D.stats.urls)} URLs${D.previous ? ' · compared with ' + esc(D.previous) : ''}</div></div>
+<button class="btn" id="theme" type="button">Theme: auto</button></header>
+<nav class="tabs" role="tablist">${tabs.map(([id, name, n], i) => `<button role="tab" id="t-${id}" aria-controls="p-${id}" aria-selected="${i === 0}" data-tab="${id}">${name}<span>${fmt(n)}</span></button>`).join('')}</nav>
+${tabs.map(([id], i) => `<div role="tabpanel" id="p-${id}" aria-labelledby="t-${id}" ${i ? 'hidden' : ''}></div>`).join('')}
+<footer>Made with seo-audit-dashboard from a Screaming Frog crawl. Checks that need Search Console, analytics, logs or backlink data are marked "Not checked here", never guessed.</footer>`;
+
+let saved = 'auto'; try { saved = localStorage.getItem('seo-audit-theme') || 'auto' } catch (e) {}
+setTheme(saved);
+$('#theme').addEventListener('click', () => { const cur = $('#theme').textContent.replace('Theme: ', ''); setTheme({auto:'light', light:'dark', dark:'auto'}[cur]); });
+
+const built = {};
+function show(id) {
+  document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === id));
+  document.querySelectorAll('[role=tabpanel]').forEach(p => p.hidden = p.id !== 'p-' + id);
+  if (!built[id]) { built[id] = true; R[id]($('#p-' + id)); }
+  if (!/^#g-/.test(location.hash)) try { history.replaceState(null, '', '#' + id) } catch (e) {}
+}
+document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.tab)));
+document.addEventListener('keydown', e => { if (e.target.getAttribute('role') !== 'tab') return; const all = [...document.querySelectorAll('nav.tabs button')]; const i = all.indexOf(e.target);
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const n = all[(i + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length]; n.focus(); show(n.dataset.tab); } });
+
+function seg(name, opts, cur, cb) {
+  const w = document.createElement('div'); w.innerHTML = `<span class="fl">${name}</span><div class="seg">${opts.map(o => `<button type="button" aria-pressed="${o === cur}">${esc(o)}</button>`).join('')}</div>`;
+  w.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { w.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); cb(b.textContent); }));
+  return w;
+}
+function whereTable(w, wn, kind) {
+  if (!w || !w.length) return '<p class="mute">No linking pages recorded.</p>';
+  const head = kind === 'pages' ? '<tr><th>Page</th><th>Detail</th></tr>' : '<tr><th>Linking page</th><th>Anchor / alt text</th><th>Position</th><th class="n">Times</th></tr>';
+  const rows = w.map(([s, a, p, n]) => kind === 'pages' ? `<tr><td>${link(s)}</td><td>${esc(a)}</td></tr>` : `<tr><td>${link(s)}</td><td>${a ? esc(a) : '<span class="mute">(empty)</span>'}</td><td>${esc(p)}</td><td class="n">${fmt(n)}</td></tr>`).join('');
+  return `<table class="inner"><thead>${head}</thead><tbody>${rows}</tbody></table>${wn > w.length ? `<p class="mute more">Showing ${fmt(w.length)} of ${fmt(wn)}. The workbook has the full list.</p>` : ''}`;
+}
+function expandable(tbody, rows, cols, render, sub, step) {
+  let shown = 0; step = step || 200;
+  const more = document.createElement('div');
+  function add() {
+    const frag = document.createDocumentFragment();
+    rows.slice(shown, shown + step).forEach(r => {
+      const tr = document.createElement('tr'); tr.innerHTML = render(r);
+      if (sub) { tr.className = 'rr'; tr.tabIndex = 0;
+        const t = () => { if (tr.classList.toggle('open')) { const s = document.createElement('tr'); s.className = 'sub'; s.innerHTML = `<td colspan="${cols}">${sub(r)}</td>`; tr.after(s); } else if (tr.nextElementSibling && tr.nextElementSibling.className === 'sub') tr.nextElementSibling.remove(); };
+        tr.addEventListener('click', e => { if (e.target.closest('a')) return; t(); }); tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); t(); } }); }
+      frag.appendChild(tr);
+    });
+    tbody.appendChild(frag); shown += step;
+    more.innerHTML = shown < rows.length ? `<button class="btn more" type="button">Show ${fmt(Math.min(step, rows.length - shown))} more of ${fmt(rows.length - shown)}</button>` : '';
+    const b = more.querySelector('button'); if (b) b.addEventListener('click', add);
+  }
+  tbody.innerHTML = ''; add();
+  return more;
+}
+function copyBtn(pre) {
+  const b = document.createElement('button'); b.className = 'btn copy'; b.type = 'button'; b.textContent = 'Copy';
+  b.addEventListener('click', () => { const t = pre.querySelector('code').textContent; const ok = () => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1400); };
+    try { navigator.clipboard.writeText(t).then(ok, () => {}) } catch (e) {} });
+  pre.appendChild(b);
+}
+
+const R = {};
+R.audit = el => {
+  const s = D.score, circ = 2 * Math.PI * 62, sev = {bad:0, warn:0};
+  open.forEach(g => sev[g.sev]++);
+  const skip = D.groups.filter(g => g.status === 'skip').length;
+  const tile = (n, l, sub, t) => `<div class="tile ${t || ''}"><div class="tn">${n}</div><div class="tl">${l}</div><div class="ts">${sub}</div></div>`;
+  const delta = D.prev_score != null && s != null ? ` <span class="mute">(${s - D.prev_score >= 0 ? '+' : ''}${s - D.prev_score} since last crawl)</span>` : '';
+  const sorted = open.slice().sort((a, b) => a.pri.localeCompare(b.pri) || b.penalty - a.penalty);
+  el.innerHTML = `
+  <section class="overview">
+    <div class="panel scorebox"><svg class="ring" viewBox="0 0 148 148" role="img" aria-label="Health score ${s == null ? 'not available' : s + ' out of 100'}">
+      <circle cx="74" cy="74" r="62" fill="none" stroke="var(--chip)" stroke-width="12"/>
+      <circle cx="74" cy="74" r="62" fill="none" stroke="var(--${tone(s) || 'skip'})" stroke-width="12" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${circ * (1 - (s || 0) / 100)}" transform="rotate(-90 74 74)"/>
+      <text x="74" y="80" text-anchor="middle" font-size="34" font-weight="700">${s == null ? '–' : s}</text><text x="74" y="101" text-anchor="middle" font-size="11" fill="var(--mute)">OUT OF 100</text></svg>
+      <div class="verdict ${tone(s)}">${esc(D.verdict)}</div><div class="ts">Health score${delta}</div></div>
+    <div class="tiles">
+      ${tile(fmt(D.stats.urls), 'URLs crawled', `${fmt(D.stats.html)} HTML pages on the site`)}
+      ${tile(fmt(D.stats.indexable), 'Indexable pages', `${fmt(D.stats.live)} pages load with 200`)}
+      ${tile(fmt(sev.bad), 'High priority issues', 'fix these first', sev.bad ? 'bad' : 'good')}
+      ${tile(fmt(sev.warn), 'Other open issues', 'P2 and P3', sev.warn ? 'warn' : 'good')}
+      ${D.have_links ? tile(fmt(D.broken.length), 'Broken link rows', 'on the 404 and broken links tab', D.broken.length ? 'bad' : 'good') : tile('–', 'Broken links', 'not checked: needs all_inlinks.csv')}
+      ${tile(fmt(skip), 'Not checked', 'missing export or column')}
+    </div>
+  </section>
+  <section class="panel"><h2>What the crawl found</h2><ul class="find">${D.findings.map(f => `<li>${esc(f)}</li>`).join('')}</ul></section>
+  ${D.changes && D.changes.length ? `<section><h2>What changed since the last crawl</h2><p class="mute">Compared with ${esc(D.previous)}, URL by URL. Checks with no change are not listed.${D.prev_score != null ? ` Score then: ${D.prev_score}, now: ${s}.` : ''}</p><div class="box"><table><thead><tr><th>Check</th><th class="n">Before</th><th class="n">Now</th><th class="n">Fixed</th><th class="n">New</th></tr></thead><tbody>
+    ${D.changes.map(c => `<tr><td><a href="#g-${c.id}">${esc(c.title)}</a></td><td class="n">${fmt(c.before)}</td><td class="n">${fmt(c.now)}</td><td class="n"${c.fixed ? ' style="color:var(--good)"' : ''}>${c.fixed ? '−' + fmt(c.fixed) : '0'}</td><td class="n"${c.new ? ' style="color:var(--bad)"' : ''}>${c.new ? '+' + fmt(c.new) : '0'}</td></tr>`).join('')}</tbody></table></div></section>` : ''}
+  <section class="two">
+    <div class="panel"><h2>Score by area</h2>${D.cats.map(c => `<div class="bar"><span>${esc(c.cat)} <span class="mute">· ${c.open}/${c.checks} open</span></span><span class="track"><i class="${tone(c.score)}" style="width:${c.score}%"></i></span><span class="bv">${c.score}</span></div>`).join('')}</div>
+    <div class="panel"><h2>Fix in this order</h2><div class="box" style="max-height:330px"><table class="fixorder"><thead><tr><th>Priority</th><th>Issue</th><th>Owner</th><th class="n">Pages</th></tr></thead><tbody>
+      ${sorted.map(g => `<tr><td><span class="tag ${g.pri}">${g.pri}</span></td><td><a href="#g-${g.id}">${esc(g.title)}</a></td><td>${esc(g.owner)}</td><td class="n">${fmt(g.aff)}</td></tr>`).join('') || '<tr><td colspan="4">Nothing open.</td></tr>'}</tbody></table></div></div>
+  </section>
+  <section><h2>Issues</h2><p class="mute">Each open issue lists the affected URLs. Click a row to see every page that links to it, with the anchor text and where on the page the link sits.</p>
+    <div class="filters" id="af"></div><div id="issues"></div></section>`;
+  const f = {owner:'Everyone', status:'Open', q:''};
+  const af = $('#af', el);
+  af.append(seg('Owner', ['Everyone', 'Developers', 'Writers', 'SEO'], f.owner, v => { f.owner = v; draw(); }));
+  af.append(seg('Status', ['Open', 'Passed', 'Not checked', 'All'], f.status, v => { f.status = v; draw(); }));
+  const q = document.createElement('input'); q.type = 'search'; q.placeholder = 'Filter by URL, anchor or issue'; q.setAttribute('aria-label', 'Filter issues');
+  q.addEventListener('input', () => { f.q = q.value.trim().toLowerCase(); draw(); }); af.append(q);
+  const order = {open:0, pass:1, skip:2};
+  function draw() {
+    const box = $('#issues', el); box.innerHTML = '';
+    const list = D.groups.filter(g => (f.owner === 'Everyone' || g.owner === f.owner) && (f.status === 'All' || ST[g.status] === f.status))
+      .sort((a, b) => order[a.status] - order[b.status] || a.pri.localeCompare(b.pri) || (b.penalty || 0) - (a.penalty || 0));
+    let n = 0;
+    list.forEach(g => {
+      const rows = f.q ? g.rows.filter(r => (g.title + ' ' + r.c.join(' ') + ' ' + r.fix + ' ' + (r.w || []).map(x => x[0] + ' ' + x[1]).join(' ')).toLowerCase().includes(f.q)) : g.rows;
+      if (f.q && !rows.length && !g.title.toLowerCase().includes(f.q)) return;
+      n++;
+      const card = document.createElement('article'); card.className = 'issue ' + (g.status === 'open' ? g.sev : g.status); card.id = 'g-' + g.id;
+      card.innerHTML = `<h3>${esc(g.title)}</h3>
+        <div class="tags"><span class="tag ${g.pri}">${g.pri}</span><span class="pill ${g.status === 'open' ? (g.sev === 'bad' ? 'fail' : 'warn') : g.status === 'pass' ? 'pass' : ''}">${ST[g.status]}</span><span class="tag">${esc(g.cat)}</span><span class="tag">Owner: ${esc(g.owner)}</span>${g.status === 'open' ? `<span class="tag">${fmt(g.total_rows)} ${g.total_rows === 1 ? 'item' : 'items'}${g.aff !== g.total_rows ? ` · ${fmt(g.aff)} ${g.aff === 1 ? 'page' : 'pages'}` : ''}</span>` : ''}</div>
+        ${g.summary ? `<p><b>${esc(g.summary)}</b></p>` : ''}
+        <p class="mute">${esc(g.why)}</p>
+        <div class="fixbox"><b>Fix:</b> ${esc(g.fix)}</div>
+        ${g.code ? `<pre><code>${esc(g.code)}</code></pre>` : ''}
+        <p><b>Done when:</b> ${esc(g.done)}</p>`;
+      card.querySelectorAll('pre').forEach(copyBtn);
+      if (g.status === 'open' && rows.length) {
+        const d = document.createElement('details'); d.className = 'rows'; d.open = rows.length <= 12 || !!f.q;
+        d.innerHTML = `<summary>${fmt(rows.length)} affected ${rows.length === 1 ? 'item' : 'items'}${g.total_rows > g.rows.length ? ` (first ${fmt(g.rows.length)} of ${fmt(g.total_rows)}, all in the workbook)` : ''}</summary>
+          <div class="box"><table><thead><tr>${g.cols.map((c, i) => `<th${typeof (rows[0].c[i]) === 'number' ? ' class="n"' : ''}>${esc(c)}</th>`).join('')}<th>Fix</th>${rows.some(r => r.w) ? '<th class="n">Linking pages</th>' : ''}</tr></thead><tbody></tbody></table></div>`;
+        const hasW = rows.some(r => r.w);
+        const more = expandable(d.querySelector('tbody'), rows, g.cols.length + 1 + (hasW ? 1 : 0),
+          r => r.c.map((v, i) => typeof v === 'number' ? `<td class="n">${fmt(v)}</td>` : `<td class="${i === 0 || /^https?:/.test(v) ? 'u' : ''}">${/^https?:/.test(v) ? link(v) : esc(v)}</td>`).join('') + `<td class="fx">${esc(r.fix)}</td>` + (hasW ? `<td class="n">${r.w ? fmt(r.np || r.wn) : ''}</td>` : ''),
+          hasW ? r => whereTable(r.w, r.wn, r.wk) : null, 100);
+        d.appendChild(more); card.appendChild(d);
+      }
+      box.appendChild(card);
+    });
+    if (!n) box.innerHTML = '<p class="mute">No issues match these filters.</p>';
+  }
+  draw();
+};
+
+R.checklist = el => {
+  const C = D.checklist, cnt = C.counts;
+  el.innerHTML = `<h2>SEO audit checklist</h2><p class="mute">${fmt(C.total)} checks in ${C.sections.length} sections. The crawl answers what it can; checks that need Search Console, analytics, logs or backlink data are marked "Not checked here" with the tool you need.</p>
+    <div class="counts">${['pass', 'fail', 'warn', 'todo', 'na'].map(k => `<span class="pill ${k}">${CST[k]}: ${fmt(cnt[k] || 0)}</span>`).join('')}</div>
+    <div class="filters" id="cf"></div><div id="cl"></div>`;
+  const f = {s:'All', o:'Everyone', q:''};
+  const cf = $('#cf', el);
+  cf.append(seg('Status', ['All', 'Pass', 'Fail', 'Partly', 'Not checked here'], 'All', v => { f.s = v; draw(); }));
+  cf.append(seg('Owner', ['Everyone', 'Developers', 'Writers', 'SEO'], 'Everyone', v => { f.o = v; draw(); }));
+  const q = document.createElement('input'); q.type = 'search'; q.placeholder = 'Search checks'; q.setAttribute('aria-label', 'Search checks');
+  q.addEventListener('input', () => { f.q = q.value.trim().toLowerCase(); draw(); }); cf.append(q);
+  function draw() {
+    $('#cl', el).innerHTML = C.sections.map(sec => {
+      const items = sec.items.filter(it => (f.s === 'All' || CST[it.s] === f.s) && (f.o === 'Everyone' || it.o === f.o) && (!f.q || (it.c + ' ' + it.what + ' ' + it.e).toLowerCase().includes(f.q)));
+      if (!items.length) return '';
+      return `<div class="check-sec"><h3>${esc(sec.t)}</h3><div class="box" style="max-height:none"><table><thead><tr><th>Status</th><th>Check</th><th>What good looks like</th><th>What the crawl shows</th><th>Owner</th><th>Severity</th></tr></thead><tbody>
+        ${items.map(it => `<tr><td><span class="pill ${it.s}">${CST[it.s]}</span></td><td><b>${esc(it.c)}</b></td><td>${esc(it.what)}</td><td>${esc(it.e)}${it.g ? ` <a href="#g-${it.g}" data-go="${it.g}">See issue</a>` : ''}</td><td>${esc(it.o)}</td><td>${esc(it.v)}</td></tr>`).join('')}</tbody></table></div></div>`;
+    }).join('') || '<p class="mute">No checks match these filters.</p>';
+    el.querySelectorAll('[data-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); show('audit'); const t = document.getElementById('g-' + a.dataset.go); if (t) t.scrollIntoView(); }));
+  }
+  draw();
+};
+
+R.internal = el => {
+  el.innerHTML = `<h2>Internal links</h2><p class="mute">Every indexable page with every page that links to it, the anchor text and the link position. Sitewide navigation and footer links are folded into one line.${D.internal_total > D.internal.length ? ` Showing the ${fmt(D.internal.length)} most-linked of ${fmt(D.internal_total)} pages; the workbook has all.` : ''}</p>
+    <div class="filters"><input type="search" placeholder="Filter by page URL or title" aria-label="Filter pages"></div>
+    <div class="box"><table><thead><tr><th>Page</th><th>Title</th><th class="n">Linking pages</th></tr></thead><tbody></tbody></table></div><div class="pg"></div>`;
+  if (!D.have_links) { $('tbody', el).innerHTML = '<tr><td colspan="3">Not checked: this crawl has no all_inlinks.csv (Bulk Export > Links > All Inlinks), so linking pages are unknown.</td></tr>'; $('input', el).remove(); return; }
+  const draw = v => { const rows = D.internal.filter(p => !v || (p.u + ' ' + p.t).toLowerCase().includes(v));
+    const m = expandable($('tbody', el), rows, 3, p => `<td class="u">${link(p.u)}</td><td>${esc(p.t)}</td><td class="n" style="color:var(--${p.n < 3 ? 'warn' : 'fg'})">${fmt(p.n)}</td>`, p => whereTable(p.w, p.wn, 'links'));
+    $('.pg', el).replaceChildren(m); };
+  $('input', el).addEventListener('input', e => draw(e.target.value.trim().toLowerCase())); draw('');
+};
+
+R.broken = el => {
+  el.innerHTML = `<h2>404 and broken links</h2><p class="mute">One row per broken link or missing file: the dead URL, the page it sits on, the anchor and position, and the fix. Broken links to other sites are on the External links tab.</p>
+    <div class="filters"><input type="search" placeholder="Filter by dead URL, linking page or anchor" aria-label="Filter broken links"></div>
+    <div class="box"><table><thead><tr><th>Dead URL</th><th>Status</th><th>Kind</th><th>Linking page</th><th>Anchor / alt</th><th>Position</th><th>Fix</th></tr></thead><tbody></tbody></table></div><div class="pg"></div>`;
+  if (!D.have_links) { $('tbody', el).innerHTML = '<tr><td colspan="7">Not checked: this crawl has no all_inlinks.csv (Bulk Export > Links > All Inlinks), so links cannot be traced.</td></tr>'; return; }
+  if (!D.broken.length) { $('tbody', el).innerHTML = '<tr><td colspan="7">No broken internal links or missing files found.</td></tr>'; return; }
+  const draw = v => { const rows = D.broken.filter(b => !v || (b.d + ' ' + b.src + ' ' + b.a).toLowerCase().includes(v));
+    $('.pg', el).replaceChildren(expandable($('tbody', el), rows, 7, b => `<td class="u">${link(b.d)}</td><td><span class="pill fail">${esc(b.st)}</span></td><td>${esc(b.k)}</td><td class="u">${link(b.src)}</td><td>${esc(b.a) || '<span class="mute">(empty)</span>'}</td><td>${esc(b.p)}</td><td class="fx">${esc(b.fix)}</td>`)); };
+  $('input', el).addEventListener('input', e => draw(e.target.value.trim().toLowerCase())); draw('');
+};
+
+R.external = el => {
+  el.innerHTML = `<h2>External links</h2><p class="mute">Every external URL the site links to, with its status code and the pages that link to it. 401, 403, 429 and 999 usually mean the other site blocks crawlers; open those in a browser before changing anything.</p>
+    <div class="filters" id="ef"></div>
+    <div class="box"><table><thead><tr><th>External URL</th><th>Status</th><th class="n">Linking pages</th></tr></thead><tbody></tbody></table></div><div class="pg"></div>`;
+  const f = {s:'All', q:''};
+  const ef = $('#ef', el);
+  ef.append(seg('Status', ['All', 'Errors', 'Blocked', 'Redirects', 'OK'], 'All', v => { f.s = v; draw(); }));
+  const q = document.createElement('input'); q.type = 'search'; q.placeholder = 'Filter by URL'; q.setAttribute('aria-label', 'Filter external links');
+  q.addEventListener('input', () => { f.q = q.value.trim().toLowerCase(); draw(); }); ef.append(q);
+  if (!D.have_links) { $('tbody', el).innerHTML = '<tr><td colspan="3">Not checked: this crawl has no all_inlinks.csv (Bulk Export > Links > All Inlinks).</td></tr>'; ef.remove(); return; }
+  if (!D.external.length) { $('tbody', el).innerHTML = '<tr><td colspan="3">The site links to no external URLs.</td></tr>'; return; }
+  const kind = st => /^(401|403|406|429|999)$/.test(st) ? 'Blocked' : /^[45]|^0$|^$|\?/.test(st) ? 'Errors' : /^3/.test(st) ? 'Redirects' : 'OK';
+  function draw() { const rows = D.external.filter(e => (f.s === 'All' || kind(e.st) === f.s) && (!f.q || e.u.toLowerCase().includes(f.q)));
+    $('.pg', el).replaceChildren(expandable($('tbody', el), rows, 3, e => `<td class="u">${link(e.u)}</td><td><span class="pill ${kind(e.st) === 'Errors' ? 'fail' : kind(e.st) === 'OK' ? 'pass' : 'warn'}">${esc(e.st || '?')}</span></td><td class="n">${fmt(e.n)}</td>`, e => whereTable(e.w, e.wn, 'links'))); }
+  draw();
+};
+
+document.addEventListener('click', e => { const a = e.target.closest('a[href^="#g-"]'); if (!a) return; e.preventDefault(); show('audit');
+  const t = document.getElementById(a.getAttribute('href').slice(1)); if (t) t.scrollIntoView({block:'start'}); });
+const start = (location.hash || '').slice(1);
+show(tabs.some(t => t[0] === start) ? start : 'audit');
+if (start.startsWith('g-')) { const t = document.getElementById(start); if (t) { const d = t.querySelector('details'); if (d) d.open = true; t.scrollIntoView({block:'start'}); } }
+})();
+</script>
+</body>
+</html>
